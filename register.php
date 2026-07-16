@@ -7,7 +7,6 @@ if (isset($_POST['register'])) {
     $email = trim($_POST['email']);
     $password = trim($_POST['password']);
 
-    // Check if email already exists
     $check = "SELECT * FROM users WHERE email='$email'";
     $result = $conn->query($check);
 
@@ -15,17 +14,15 @@ if (isset($_POST['register'])) {
         echo "<script>alert('Email already exists!');</script>";
     } else {
 
-        // Hash the password
         $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
 
-        // Insert user
-        $sql = "INSERT INTO users (name, email, password)
-                VALUES ('$name', '$email', '$hashedPassword')";
+        $sql = "INSERT INTO users(name,email,password)
+                VALUES('$name','$email','$hashedPassword')";
 
-        if ($conn->query($sql) === TRUE) {
+        if ($conn->query($sql)) {
             echo "<script>alert('Registration Successful!');</script>";
         } else {
-            echo "<script>alert('Error: " . $conn->error . "');</script>";
+            echo "<script>alert('".$conn->error."');</script>";
         }
     }
 }
@@ -37,26 +34,30 @@ if (isset($_POST['register'])) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>User Registration</title>
+
     <link rel="stylesheet" href="css/style.css">
+
 </head>
 <body>
 
-<div class="container">
+<div class="form-container">
 
     <h2>User Registration</h2>
 
     <form method="POST">
 
-        <label>Full Name</label><br>
-        <input type="text" name="name" required><br><br>
+        <label>Full Name</label>
+        <input type="text" name="name" required>
 
-        <label>Email</label><br>
-        <input type="email" name="email" required><br><br>
+        <label>Email</label>
+        <input type="email" name="email" required>
 
-        <label>Password</label><br>
-        <input type="password" name="password" required><br><br>
+        <label>Password</label>
+        <input type="password" name="password" required>
 
-        <button type="submit" name="register">Register</button>
+        <button type="submit" name="register">
+            Register
+        </button>
 
     </form>
 

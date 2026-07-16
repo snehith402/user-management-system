@@ -2,67 +2,83 @@
 session_start();
 include "includes/db.php";
 
-if (isset($_POST['login'])) {
+if(isset($_POST['login'])){
 
-    $email = trim($_POST['email']);
-    $password = trim($_POST['password']);
+$email=$_POST['email'];
+$password=$_POST['password'];
 
-    $sql = "SELECT * FROM users WHERE email='$email'";
-    $result = $conn->query($sql);
+$sql="SELECT * FROM users WHERE email='$email'";
 
-    if ($result->num_rows == 1) {
+$result=$conn->query($sql);
 
-        $user = $result->fetch_assoc();
+if($result->num_rows==1){
 
-        if (password_verify($password, $user['password'])) {
+$user=$result->fetch_assoc();
 
-            $_SESSION['user_id'] = $user['id'];
-            $_SESSION['user_name'] = $user['name'];
+if(password_verify($password,$user['password'])){
 
-            header("Location: dashboard.php");
-            exit();
+$_SESSION['user_id']=$user['id'];
+$_SESSION['user_name']=$user['name'];
 
-        } else {
-            echo "<script>alert('Incorrect Password');</script>";
-        }
+header("Location: dashboard.php");
+exit();
 
-    } else {
-        echo "<script>alert('Email not found');</script>";
-    }
+}else{
+
+echo "<script>alert('Incorrect Password');</script>";
+
+}
+
+}else{
+
+echo "<script>alert('Email not found');</script>";
+
+}
+
 }
 ?>
 
 <!DOCTYPE html>
-<html lang="en">
+<html>
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login</title>
-    <link rel="stylesheet" href="css/style.css">
+
+<title>Login</title>
+
+<link rel="stylesheet" href="css/style.css">
+
 </head>
+
 <body>
 
-<div class="container">
+<div class="form-container">
 
-    <h2>User Login</h2>
+<h2>User Login</h2>
 
-    <form method="POST">
+<form method="POST">
 
-        <label>Email</label><br>
-        <input type="email" name="email" required><br><br>
+<label>Email</label>
 
-        <label>Password</label><br>
-        <input type="password" name="password" required><br><br>
+<input type="email" name="email" required>
 
-        <button type="submit" name="login">Login</button>
+<label>Password</label>
 
-    </form>
+<input type="password" name="password" required>
 
-    <br>
+<button type="submit" name="login">
 
-    <a href="register.php">Create New Account</a>
+Login
+
+</button>
+
+</form>
+
+<br>
+
+<a href="register.php">Create New Account</a>
 
 </div>
 
 </body>
+
 </html>
