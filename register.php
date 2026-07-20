@@ -3,27 +3,49 @@ include "includes/db.php";
 
 if (isset($_POST['register'])) {
 
-    $name = trim($_POST['name']);
-    $email = trim($_POST['email']);
-    $password = trim($_POST['password']);
+    try {
 
-    $check = "SELECT * FROM users WHERE email='$email'";
-    $result = $conn->query($check);
+        $name = trim($_POST['name']);
+        $email = trim($_POST['email']);
+        $password = trim($_POST['password']);
 
-    if ($result->num_rows > 0) {
-        echo "<script>alert('Email already exists!');</script>";
-    } else {
+        // Server-side Validation
+        if (empty($name) || empty($email) || empty($password)) {
+            throw new Exception("All fields are required.");
+        }
+
+        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            throw new Exception("Invalid email format.");
+        }
+
+        if (strlen($password) < 6) {
+            throw new Exception("Password must be at least 6 characters.");
+        }
+
+        // Check if email already exists
+        $stmt = $conn->prepare("SELECT id FROM users WHERE email=?");
+        $stmt->bind_param("s", $email);
+        $stmt->execute();
+        $result = $stmt->get_result();
+
+        if ($result->num_rows > 0) {
+            throw new Exception("Email already exists!");
+        }
 
         $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
 
-        $sql = "INSERT INTO users(name,email,password)
-                VALUES('$name','$email','$hashedPassword')";
+        // Insert user
+        $stmt = $conn->prepare("INSERT INTO users(name,email,password) VALUES(?,?,?)");
+        $stmt->bind_param("sss", $name, $email, $hashedPassword);
 
-        if ($conn->query($sql)) {
-            echo "<script>alert('Registration Successful!');</script>";
+        if ($stmt->execute()) {
+            echo "<script>alert('Registration Successful!'); window.location='login.php';</script>";
         } else {
-            echo "<script>alert('".$conn->error."');</script>";
+            throw new Exception("Registration failed.");
         }
+
+    } catch (Exception $e) {
+        echo "<script>alert('" . $e->getMessage() . "');</script>";
     }
 }
 ?>
@@ -36,6 +58,7 @@ if (isset($_POST['register'])) {
     <title>User Registration</title>
 
     <link rel="stylesheet" href="css/style.css">
+    <script src="js/validation.js"></script>
 
 </head>
 <body>
@@ -44,16 +67,16 @@ if (isset($_POST['register'])) {
 
     <h2>User Registration</h2>
 
-    <form method="POST">
+    <form method="POST" onsubmit="return validateRegister();">
 
         <label>Full Name</label>
-        <input type="text" name="name" required>
+        <input type="text" id="name" name="name" required>
 
         <label>Email</label>
-        <input type="email" name="email" required>
+        <input type="email" id="email" name="email" required>
 
         <label>Password</label>
-        <input type="password" name="password" required>
+        <input type="password" id="password" name="password" required>
 
         <button type="submit" name="register">
             Register

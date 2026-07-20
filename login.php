@@ -2,39 +2,52 @@
 session_start();
 include "includes/db.php";
 
-if(isset($_POST['login'])){
+if (isset($_POST['login'])) {
 
-$email=$_POST['email'];
-$password=$_POST['password'];
+    try {
 
-$sql="SELECT * FROM users WHERE email='$email'";
+        $email = trim($_POST['email']);
+        $password = trim($_POST['password']);
 
-$result=$conn->query($sql);
+        // Server-side Validation
+        if (empty($email) || empty($password)) {
+            throw new Exception("All fields are required.");
+        }
 
-if($result->num_rows==1){
+        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            throw new Exception("Invalid email format.");
+        }
 
-$user=$result->fetch_assoc();
+        // Prepared Statement
+        $stmt = $conn->prepare("SELECT * FROM users WHERE email=?");
+        $stmt->bind_param("s", $email);
+        $stmt->execute();
 
-if(password_verify($password,$user['password'])){
+        $result = $stmt->get_result();
 
-$_SESSION['user_id']=$user['id'];
-$_SESSION['user_name']=$user['name'];
+        if ($result->num_rows == 1) {
 
-header("Location: dashboard.php");
-exit();
+            $user = $result->fetch_assoc();
 
-}else{
+            if (password_verify($password, $user['password'])) {
 
-echo "<script>alert('Incorrect Password');</script>";
+                $_SESSION['user_id'] = $user['id'];
+                $_SESSION['user_name'] = $user['name'];
 
-}
+                header("Location: dashboard.php");
+                exit();
 
-}else{
+            } else {
+                throw new Exception("Incorrect Password");
+            }
 
-echo "<script>alert('Email not found');</script>";
+        } else {
+            throw new Exception("Email not found");
+        }
 
-}
-
+    } catch (Exception $e) {
+        echo "<script>alert('" . $e->getMessage() . "');</script>";
+    }
 }
 ?>
 
@@ -43,9 +56,10 @@ echo "<script>alert('Email not found');</script>";
 
 <head>
 
-<title>Login</title>
+    <title>Login</title>
 
-<link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/style.css">
+    <script src="js/validation.js"></script>
 
 </head>
 
@@ -53,32 +67,29 @@ echo "<script>alert('Email not found');</script>";
 
 <div class="form-container">
 
-<h2>User Login</h2>
+    <h2>User Login</h2>
 
-<form method="POST">
+    <form method="POST" onsubmit="return validateLogin();">
 
-<label>Email</label>
+        <label>Email</label>
 
-<input type="email" name="email" required>
+        <input type="email" id="email" name="email" required>
 
-<label>Password</label>
+        <label>Password</label>
 
-<input type="password" name="password" required>
+        <input type="password" id="password" name="password" required>
 
-<button type="submit" name="login">
+        <button type="submit" name="login">
+            Login
+        </button>
 
-Login
+    </form>
 
-</button>
+    <br>
 
-</form>
-
-<br>
-
-<a href="register.php">Create New Account</a>
+    <a href="register.php">Create New Account</a>
 
 </div>
 
 </body>
-
 </html>

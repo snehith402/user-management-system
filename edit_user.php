@@ -1,7 +1,4 @@
 <?php
-error_reporting(E_ALL);
-ini_set('display_errors', 1);
-
 session_start();
 
 if (!isset($_SESSION['user_id'])) {
@@ -16,43 +13,51 @@ if (!isset($_GET['id'])) {
     exit();
 }
 
-$id = (int) $_GET['id'];
+$id = (int)$_GET['id'];
 
-// Get user details
-$sql = "SELECT * FROM users WHERE id = $id";
-$result = mysqli_query($conn, $sql);
+try {
 
-if (!$result) {
-    die("Query Error: " . mysqli_error($conn));
-}
+    // Get user details
+    $stmt = $conn->prepare("SELECT * FROM users WHERE id=?");
+    $stmt->bind_param("i", $id);
+    $stmt->execute();
 
-if (mysqli_num_rows($result) == 0) {
-    die("User not found.");
-}
+    $result = $stmt->get_result();
 
-$user = mysqli_fetch_assoc($result);
-
-// Update user
-if (isset($_POST['update'])) {
-
-    $name = mysqli_real_escape_string($conn, $_POST['name']);
-    $email = mysqli_real_escape_string($conn, $_POST['email']);
-
-    $update = "UPDATE users
-               SET name='$name',
-                   email='$email'
-               WHERE id=$id";
-
-    if (mysqli_query($conn, $update)) {
-
-        header("Location: manage_users.php");
-        exit();
-
-    } else {
-
-        die("Update Failed: " . mysqli_error($conn));
-
+    if ($result->num_rows == 0) {
+        throw new Exception("User not found.");
     }
+
+    $user = $result->fetch_assoc();
+
+    // Update user
+    if (isset($_POST['update'])) {
+
+        $name = trim($_POST['name']);
+        $email = trim($_POST['email']);
+
+        // Server-side validation
+        if (empty($name) || empty($email)) {
+            throw new Exception("All fields are required.");
+        }
+
+        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            throw new Exception("Invalid email format.");
+        }
+
+        $stmt = $conn->prepare("UPDATE users SET name=?, email=? WHERE id=?");
+        $stmt->bind_param("ssi", $name, $email, $id);
+
+        if ($stmt->execute()) {
+            header("Location: manage_users.php");
+            exit();
+        } else {
+            throw new Exception("Failed to update user.");
+        }
+    }
+
+} catch (Exception $e) {
+    echo "<script>alert('" . $e->getMessage() . "');</script>";
 }
 ?>
 
@@ -64,6 +69,7 @@ if (isset($_POST['update'])) {
     <title>Edit User</title>
 
     <link rel="stylesheet" href="css/style.css">
+    <script src="js/validation.js"></script>
 </head>
 
 <body>
@@ -72,11 +78,12 @@ if (isset($_POST['update'])) {
 
     <h2>Edit User</h2>
 
-    <form method="POST">
+    <form method="POST" onsubmit="return validateRegister();">
 
         <label>Full Name</label>
         <input
             type="text"
+            id="name"
             name="name"
             value="<?php echo htmlspecialchars($user['name']); ?>"
             required>
@@ -84,9 +91,13 @@ if (isset($_POST['update'])) {
         <label>Email</label>
         <input
             type="email"
+            id="email"
             name="email"
             value="<?php echo htmlspecialchars($user['email']); ?>"
             required>
+
+        <!-- Hidden password field so validateRegister() doesn't fail -->
+        <input type="hidden" id="password" value="123456">
 
         <button type="submit" name="update">
             Update User
