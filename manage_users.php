@@ -29,6 +29,10 @@ $result = $conn->query($sql);
 
 <h2>Manage Users</h2>
 
+<p style="text-align:center;">
+    View, edit, and delete registered users.
+</p>
+
 <table>
 
 <tr>
@@ -50,15 +54,15 @@ $result = $conn->query($sql);
 
 <td>
 
-<a href="edit_user.php?id=<?php echo $row['id']; ?>">Edit</a>
+<a href="edit_user.php?id=<?php echo $row['id']; ?>">
+    ✏️ Edit
+</a>
 
-|
+&nbsp;&nbsp;|&nbsp;&nbsp;
 
 <a href="delete_user.php?id=<?php echo $row['id']; ?>"
 onclick="return confirm('Delete this user?');">
-
-Delete
-
+    🗑️ Delete
 </a>
 
 </td>
@@ -72,13 +76,9 @@ Delete
 <br>
 
 <a href="dashboard.php">
-
-<button>
-
-Back to Dashboard
-
-</button>
-
+    <button type="button">
+        Back to Dashboard
+    </button>
 </a>
 
 </div>
